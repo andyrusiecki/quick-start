@@ -11,6 +11,18 @@ case "${unameOut}" in
 esac
 echo "Detected OS: $os"
 
+# TODO: Breakout each section by OS
+# Mac:
+# - xcode tools
+# - homebrew
+# - zsh and powerlevel10k
+# - vscode and docker download if not exists
+# Linux:
+# - install snap store if possible
+# - check for package manager
+# - zsh and powerlevel10k
+# - install vscode and docker with snap
+
 # Package manager detection
 pkgCommand="none"
 
@@ -49,3 +61,20 @@ then
   echo "Upgrading packages..."
   #$pkgCommand upgrade
 fi
+
+# Install packages
+# git, zsh, zsh-completions
+
+# Install Oh My Zsh
+sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+
+# Install powerlevel10k
+git clone --depth=1 https://github.com/romkatv/powerlevel10k.git $ZSH_CUSTOM/themes/powerlevel10k
+
+# After Complete
+echo "Final Steps:"
+echo "Restart zsh"
+echo "Set ZSH_THEME=\"powerlevel10k/powerlevel10k\" in ~/.zshrc."
+echo "Install and use Recommended Font: https://github.com/romkatv/powerlevel10k#meslo-nerd-font-patched-for-powerlevel10k"
+echo "Run `p10k configure`"
+echo "Terminal Colors: Tango Dark"
