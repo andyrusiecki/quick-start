@@ -11,70 +11,84 @@ case "${unameOut}" in
 esac
 echo "Detected OS: $os"
 
-# TODO: Breakout each section by OS
-# Mac:
-# - xcode tools
-# - homebrew
-# - zsh and powerlevel10k
-# - vscode and docker download if not exists
-# Linux:
-# - install snap store if possible
-# - check for package manager
-# - zsh and powerlevel10k
-# - install vscode and docker with snap
-
-# Package manager detection
-pkgCommand="none"
-
-if [ -x "$(command -v snap)" ]
+if [ $os == "Mac" ]
 then
-  # Snap store
-  pkgCommand="snap"
-elif [ -x "$(command -v brew)" ]
-then
-  # Mac
-  pkgCommand="brew"
-elif [ -x "$(command -v apt-get)" ]
-then
-  # Ubuntu/Debian
-  pkgCommand="apt-get"
-fi
-echo "Detected Package Manager: $pkgCommand"
-
-# Add package manager if none is found
-if [ $pkgCommand == "none" ]
-  if [ $os == "Mac" ]
+  # check for homebrew
+  if ![ -x "$(command -v brew)" ]
   then
-    # Install homebrew for Mac
     echo "Installing Homebrew..."
     /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
   fi
-fi
 
+  echo "Updating and Upgrading Homebrew packages..."
+  brew update
+  brew upgrade
 
-# Update package manager lists and upgrade packages
-if [ $pkgCommand == "brew" ] || [ $pkgCommand == "apt-get" ]
+  echo "Installing Homebrew packages: git, zsh, zsh-completions"
+  brew install git
+  brew install zsh
+  brew install zsh-completions
+
+  echo "Installing Oh My Zsh..."
+  sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+
+  echo "Installing Powerlevel10k..."
+  # Assumes your $ZSH_CUSTOM = "~/.oh-my-zsh/custom"
+  git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/.oh-my-zsh/custom/themes/powerlevel10k
+
+  # changes to ~/.zshrc for powerlevel10k
+  sed -i.bak "s/ZSH_THEME=.*/ZSH_THEME=powerlevel10k\/powerlevel10k/" ~/.zshrc
+
+  echo "Installing Meslo Nerd Font for Powerlevel10k..."
+  brew tap homebrew/cask-fonts
+  brew cask install font-hack-nerd-font
+
+  echo ""
+  echo "All Done! Remaining Manual Steps:"
+  if ! [ -f "/Applications/Visual Studio Code.app" ]
+  then
+    echo "- Download Visual Studio Code at https://code.visualstudio.com/docs/?dv=osx"
+  fi
+
+  if ! [ -f "/Applications/Docker.app" ]
+  then
+    echo "- Download Docker at https://hub.docker.com/editions/community/docker-ce-desktop-mac/"
+  fi
+
+  echo "- Set Terminal Font to Hack Nerd Font"
+  echo "- Run `p10k configure` to configure Powerlevel10k"
+elif [ $os == "Linux" ]
 then
-  echo "Updating packages..."
-  #$pkgCommand update
+  if [ -x "$(command -v apt-get)" ]
+  then
+    # Ubuntu/Debian
+    apt-get update
+    apt-get upgrade
 
-  echo "Upgrading packages..."
-  #$pkgCommand upgrade
+    # checking for snap store
+    if ! [ -x "$(command -v snap)" ]
+    then
+      echo "Installing Snap Store..."
+      apt-get install snapd
+    fi
+  elif [ -x "$(command -v pacman)" ]
+  then
+    # Manjaro
+    pacman update
+    pacman upgrade
+
+    # checking for snap store
+    if ! [ -x "$(command -v snap)" ]
+    then
+      echo "Installing Snap Store..."
+      sudo pacman -S snapd
+      sudo systemctl enable --now snapd.socket
+    fi
+  fi
+
+  # install snap store
+  sudo snap install snap-store
+
+  # - zsh and powerlevel10k
+  # - install vscode and docker with snap
 fi
-
-# Install packages
-# git, zsh, zsh-completions
-
-# Install Oh My Zsh
-sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-
-# Install powerlevel10k
-git clone --depth=1 https://github.com/romkatv/powerlevel10k.git $ZSH_CUSTOM/themes/powerlevel10k
-
-# After Complete
-echo "Final Steps:"
-echo "Restart zsh"
-echo "Set ZSH_THEME=\"powerlevel10k/powerlevel10k\" in ~/.zshrc."
-echo "Install and use Recommended Font: https://github.com/romkatv/powerlevel10k#meslo-nerd-font-patched-for-powerlevel10k"
-echo "Run `p10k configure`"
-echo "Terminal Colors: Tango Dark"
